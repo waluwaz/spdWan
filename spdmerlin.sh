@@ -415,9 +415,9 @@ Create_Symlinks(){
 	
 	for index in 1 2 3 4 5; do
 		comment=""
-		if [ ! -f "/sys/class/net/tun1$index/operstate" ] || [ "$(cat "/sys/class/net/tun1$index/operstate")" = "down" ]; then
-			comment=" #excluded - interface not up#"
-		fi
+#		if [ ! -f "/sys/class/net/tun1$index/operstate" ] || [ "$(cat "/sys/class/net/tun1$index/operstate")" = "down" ]; then
+#			comment=" #excluded - interface not up#"
+#		fi
 		if [ "$index" -lt 5 ]; then
 			printf "VPNC%s%s\\n" "$index" "$comment" >> "$SCRIPT_INTERFACES"
 		else
@@ -524,9 +524,9 @@ Interfaces_FromSettings(){
 			
 			for index in 1 2 3 4 5; do
 				comment=" #excluded#"
-				if [ ! -f "/sys/class/net/tun1$index/operstate" ] || [ "$(cat "/sys/class/net/tun1$index/operstate")" = "down" ]; then
-					comment=" #excluded - interface not up#"
-				fi
+#				if [ ! -f "/sys/class/net/tun1$index/operstate" ] || [ "$(cat "/sys/class/net/tun1$index/operstate")" = "down" ]; then
+#					comment=" #excluded - interface not up#"
+#				fi
 				printf "VPNC%s%s\\n" "$index" "$comment" >> "$SCRIPT_INTERFACES"
 			done
 			
@@ -551,17 +551,17 @@ Interfaces_FromSettings(){
 				
 				if echo "$interfaceline" | grep -q "#excluded" ; then
 					IFACE_LOWER="$(Get_Interface_From_Name "$(echo "$interfaceline" | cut -f1 -d"#" | sed 's/ *$//')" | tr "A-Z" "a-z")"
-					if [ ! -f "/sys/class/net/$IFACE_LOWER/operstate" ] || [ "$(cat "/sys/class/net/$IFACE_LOWER/operstate")" = "down" ]; then
-						sed -i "$ifacelinenumber"'s/ #excluded#/ #excluded - interface not up#/' "$SCRIPT_INTERFACES_USER"
-					else
+#					if [ ! -f "/sys/class/net/$IFACE_LOWER/operstate" ] || [ "$(cat "/sys/class/net/$IFACE_LOWER/operstate")" = "down" ]; then
+#						sed -i "$ifacelinenumber"'s/ #excluded#/ #excluded - interface not up#/' "$SCRIPT_INTERFACES_USER"
+#					else
 						sed -i "$ifacelinenumber"'s/ #excluded - interface not up#//' "$SCRIPT_INTERFACES_USER"
 						sed -i "$ifacelinenumber"'s/ #excluded#//' "$SCRIPT_INTERFACES_USER"
-					fi
+#					fi
 				else
 					IFACE_LOWER="$(Get_Interface_From_Name "$(echo "$interfaceline" | cut -f1 -d"#" | sed 's/ *$//')" | tr "A-Z" "a-z")"
-					if [ ! -f "/sys/class/net/$IFACE_LOWER/operstate" ] || [ "$(cat "/sys/class/net/$IFACE_LOWER/operstate")" = "down" ]; then
-						sed -i "$ifacelinenumber"'s/$/ #excluded - interface not up#/' "$SCRIPT_INTERFACES_USER"
-					fi
+#					if [ ! -f "/sys/class/net/$IFACE_LOWER/operstate" ] || [ "$(cat "/sys/class/net/$IFACE_LOWER/operstate")" = "down" ]; then
+#						sed -i "$ifacelinenumber"'s/$/ #excluded - interface not up#/' "$SCRIPT_INTERFACES_USER"
+#					fi
 				fi
 			done
 			
@@ -752,11 +752,11 @@ Set_Interface_State(){
 	if echo "$interfaceline" | grep -q "VPN" ; then
 		if echo "$interfaceline" | grep -q "#excluded" ; then
 			IFACE_LOWER="$(Get_Interface_From_Name "$(echo "$interfaceline" | cut -f1 -d"#" | sed 's/ *$//')" | tr "A-Z" "a-z")"
-			if [ ! -f "/sys/class/net/$IFACE_LOWER/operstate" ] || [ "$(cat "/sys/class/net/$IFACE_LOWER/operstate")" = "down" ]; then
-				sed -i "$1"'s/ #excluded#/ #excluded - interface not up#/' "$SCRIPT_INTERFACES_USER"
-			else
+#			if [ ! -f "/sys/class/net/$IFACE_LOWER/operstate" ] || [ "$(cat "/sys/class/net/$IFACE_LOWER/operstate")" = "down" ]; then
+#				sed -i "$1"'s/ #excluded#/ #excluded - interface not up#/' "$SCRIPT_INTERFACES_USER"
+#			else
 				sed -i "$1"'s/ #excluded - interface not up#/ #excluded#/' "$SCRIPT_INTERFACES_USER"
-			fi
+#			fi
 		fi
 	fi
 }
@@ -792,19 +792,19 @@ Generate_Interface_List(){
 			interfaceline="$(sed "$interface!d" "$SCRIPT_INTERFACES_USER" | awk '{$1=$1};1')"
 			if echo "$interfaceline" | grep -q "#excluded" ; then
 				IFACE_LOWER="$(Get_Interface_From_Name "$(echo "$interfaceline" | cut -f1 -d"#" | sed 's/ *$//')" | tr "A-Z" "a-z")"
-				if [ ! -f "/sys/class/net/$IFACE_LOWER/operstate" ] || [ "$(cat "/sys/class/net/$IFACE_LOWER/operstate")" = "down" ]; then
-					sed -i "$interface"'s/ #excluded#/ #excluded - interface not up#/' "$SCRIPT_INTERFACES_USER"
-				else
+#				if [ ! -f "/sys/class/net/$IFACE_LOWER/operstate" ] || [ "$(cat "/sys/class/net/$IFACE_LOWER/operstate")" = "down" ]; then
+#					sed -i "$interface"'s/ #excluded#/ #excluded - interface not up#/' "$SCRIPT_INTERFACES_USER"
+#				else
 					sed -i "$interface"'s/ #excluded - interface not up#//' "$SCRIPT_INTERFACES_USER"
 					sed -i "$interface"'s/ #excluded#//' "$SCRIPT_INTERFACES_USER"
-				fi
+#				fi
 			else
 				IFACE_LOWER="$(Get_Interface_From_Name "$(echo "$interfaceline" | cut -f1 -d"#" | sed 's/ *$//')" | tr "A-Z" "a-z")"
-				if [ ! -f "/sys/class/net/$IFACE_LOWER/operstate" ] || [ "$(cat "/sys/class/net/$IFACE_LOWER/operstate")" = "down" ]; then
-					sed -i "$interface"'s/$/ #excluded - interface not up#/' "$SCRIPT_INTERFACES_USER"
-				else
+#				if [ ! -f "/sys/class/net/$IFACE_LOWER/operstate" ] || [ "$(cat "/sys/class/net/$IFACE_LOWER/operstate")" = "down" ]; then
+#					sed -i "$interface"'s/$/ #excluded - interface not up#/' "$SCRIPT_INTERFACES_USER"
+#				else
 					sed -i "$interface"'s/$/ #excluded#/' "$SCRIPT_INTERFACES_USER"
-				fi
+#				fi
 			fi
 			
 			sed -i 's/ *$//' "$SCRIPT_INTERFACES_USER"
@@ -1159,9 +1159,9 @@ GenerateServerList(){
 	fi
 	promptforservername="$2"
 	printf "Generating list of closest servers for %s...\\n\\n" "$1"
-	serverlist="$("$OOKLA_DIR/speedtest" --interface="$(Get_Interface_From_Name "$1")" --servers --format="json" --accept-license --accept-gdpr)" 2>/dev/null
+	serverlist="$("$OOKLA_DIR/speedtest" --servers --format="json" --accept-license --accept-gdpr)" 2>/dev/null
 	if [ -z "$serverlist" ]; then
-		Print_Output true "Error retrieving server list for for $1" "$CRIT"
+		Print_Output true "Error retrieving server list for for WAN" "$CRIT"
 		serverno="exit"
 		return 1
 	fi
@@ -1265,7 +1265,7 @@ GenerateServerList_WebUI(){
 		IFACELIST="$(echo "$IFACELIST" | cut -c2-)"
 		
 		for IFACE_NAME in $IFACELIST; do
-			serverlist="$("$OOKLA_DIR/speedtest" --interface="$(Get_Interface_From_Name "$IFACE_NAME")" --servers --format="json" --accept-license --accept-gdpr)" 2>/dev/null
+			serverlist="$("$OOKLA_DIR/speedtest"  --servers --format="json" --accept-license --accept-gdpr)" 2>/dev/null
 			servercount="$(echo "$serverlist" | jq '.servers | length')"
 			COUNTER=1
 			until [ $COUNTER -gt "$servercount" ]; do
@@ -1276,7 +1276,7 @@ GenerateServerList_WebUI(){
 			printf "-----\\n" >> "/tmp/$serverlistfile.tmp"
 		done
 	else
-		serverlist="$("$OOKLA_DIR/speedtest" --interface="$(Get_Interface_From_Name "$spdifacename")" --servers --format="json" --accept-license --accept-gdpr)" 2>/dev/null
+		serverlist="$("$OOKLA_DIR/speedtest"  --servers --format="json" --accept-license --accept-gdpr)" 2>/dev/null
 		servercount="$(echo "$serverlist" | jq '.servers | length')"
 		COUNTER=1
 		until [ $COUNTER -gt "$servercount" ]; do
@@ -1422,10 +1422,10 @@ Run_Speedtest(){
 			for IFACE_NAME in $IFACELIST; do
 				IFACE="$(Get_Interface_From_Name "$IFACE_NAME")"
 				IFACE_LOWER="$(echo "$IFACE" | tr "A-Z" "a-z")"
-				if [ ! -f "/sys/class/net/$IFACE_LOWER/operstate" ] || [ "$(cat "/sys/class/net/$IFACE_LOWER/operstate")" = "down" ]; then
-					Print_Output true "$IFACE not up, please check. Skipping speedtest for $IFACE_NAME" "$WARN"
-					continue
-				else
+#				if [ ! -f "/sys/class/net/$IFACE_LOWER/operstate" ] || [ "$(cat "/sys/class/net/$IFACE_LOWER/operstate")" = "down" ]; then
+#					Print_Output true "$IFACE not up, please check. Skipping speedtest for $IFACE_NAME" "$WARN"
+#					continue
+#				else
 					if [ "$mode" = "webui_user" ]; then
 						mode="user"
 					elif [ "$mode" = "webui_auto" ]; then
@@ -1460,7 +1460,7 @@ Run_Speedtest(){
 					
 					if [ "$mode" = "auto" ]; then
 						Print_Output true "Starting speedtest using auto-selected server for $IFACE_NAME interface" "$PASS"
-						"$OOKLA_DIR/speedtest" --interface="$IFACE" --format="human-readable" --unit="Mbps" --progress="yes" --accept-license --accept-gdpr | tee "$tmpfile" &
+						"$OOKLA_DIR/speedtest"  --format="human-readable" --unit="Mbps" --progress="yes" --accept-license --accept-gdpr | tee "$tmpfile" &
 						speedtestcount=0
 						while [ -n "$(pidof speedtest)" ] && [ "$speedtestcount" -lt 120 ]; do
 							speedtestcount="$((speedtestcount + 1))"
@@ -1474,7 +1474,7 @@ Run_Speedtest(){
 					else
 						if [ "$speedtestserverno" -ne 0 ]; then
 							Print_Output true "Starting speedtest using $speedtestservername for $IFACE_NAME interface" "$PASS"
-							"$OOKLA_DIR/speedtest" --interface="$IFACE" --server-id="$speedtestserverno" --format="human-readable" --unit="Mbps" --progress="yes" --accept-license --accept-gdpr | tee "$tmpfile" &
+							"$OOKLA_DIR/speedtest"  --server-id="$speedtestserverno" --format="human-readable" --unit="Mbps" --progress="yes" --accept-license --accept-gdpr | tee "$tmpfile" &
 							speedtestcount=0
 							while [ -n "$(pidof speedtest)" ] && [ "$speedtestcount" -lt 120 ]; do
 								speedtestcount="$((speedtestcount + 1))"
@@ -1487,7 +1487,7 @@ Run_Speedtest(){
 							fi
 						else
 							Print_Output true "Starting speedtest using using auto-selected server for $IFACE_NAME interface" "$PASS"
-							"$OOKLA_DIR/speedtest" --interface="$IFACE" --format="human-readable" --unit="Mbps" --progress="yes" --accept-license --accept-gdpr | tee "$tmpfile" &
+							"$OOKLA_DIR/speedtest"  --format="human-readable" --unit="Mbps" --progress="yes" --accept-license --accept-gdpr | tee "$tmpfile" &
 							speedtestcount=0
 							while [ -n "$(pidof speedtest)" ] && [ "$speedtestcount" -lt 120 ]; do
 								speedtestcount="$((speedtestcount + 1))"
@@ -1576,6 +1576,12 @@ Run_Speedtest(){
 					extStats="/jffs/addons/extstats.d/mod_spdstats.sh"
 					if [ -f "$extStats" ]; then
 						sh "$extStats" ext "$download" "$upload"
+					fi
+#				fi
+				if [ "$mode" = "schedule" ]; then
+					if [ "$(echo $download | awk 'BEGIN{FS="."}{print $1}')" -gt "310" ]
+					then 
+						break
 					fi
 				fi
 			done
