@@ -1,11 +1,11 @@
 # spdWAN
-## v0.0.1
+## v0.0.2
 spdWan is a hack based on spdMerlin v4.2.1. It might offer most of the same features except that it only supports the WAN interface
 and it supports multiple Ookla servers for the same interface (i.e. the WAN interface). Most references to "interface" should be understood as references to one among several "probes" and all probes apply to the WAN interface. Different probes might be related to different preferred servers. All results from a specific probe will be grouped in a dedicated file. The files/probes happen to have names that usually refer to interfaces, even though in this case the only targetted interface is WAN.
 The coding is brutal from a person with close to zero experience in shell scripting. It should not start a nuclear war. However, it might impact one of your most critical piece of hardware. Feel free to use as a source of laughing, and/or inspiration of what to do or what NOT to do. I do not recommend you run this as is , unless you  really feel adventurous...
 I also share in order to clarify if there is interest in the "scope" of the script among users and/or scripters.
 
-WARNING: When runnning in schedule mode, the script might run several probes but it will stop as soon as the download speed reaches a target minimum. This is hardcoded around line 1581. If you can't find your way around this, you should probably just enjoy spdMerlin, and stay away from my spdWan probably broken piece of software.
+WARNING: When runnning in schedule mode, the script might run several probes but it will stop as soon as the download speed reaches a target minimum. This is based on the value defined as upper download limit for the AutoBW feature.
 
 
 spdWan is free to use under the [GNU General Public License version 3](https://opensource.org/licenses/GPL-3.0) (GPL 3.0).
