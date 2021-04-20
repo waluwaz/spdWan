@@ -1578,18 +1578,18 @@ Run_Speedtest(){
 						sh "$extStats" ext "$download" "$upload"
 					fi
 #				fi
-# When running in scheduled mode, even if it is instructed to run several times, it will stop 
-# as soon as one run reaches the download speed hard-coded two lines below.
+# When instructed to run for several probes, it will stop 
+# as soon as one run reaches the download speed hard-coded two lines below, or in the upper limit for download for AutoBW.
 # The rational is that if one server indicates bad performance, it might be due to a temporarily "bad" server.
 # In such case, the testing proceeds with more servers.
 # Note that the servers are  defined in a specific order. First servers that are far from my ISP (more likely to produce bad results).
 # Then servers which are close to my ISP. 
-				if [ "$mode" = "schedule" ]; then
-					if [ "$(echo $download | awk 'BEGIN{FS="."}{print $1}')" -gt "310" ]
+#				if [ "$mode" = "schedule" ]; then
+					if [ "$(echo $download | awk 'BEGIN{FS="."}{print $1}')" -gt "$(($(AutoBWConf check ULIMIT DOWN)*1))" ]
 					then 
 						break
 					fi
-				fi
+#				fi
 			done
 			
 			if [ "$(ExcludeFromQoS check)" = "true" ]; then
