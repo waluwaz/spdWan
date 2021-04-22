@@ -1,16 +1,18 @@
 #!/bin/sh
 
 ############################################################
-##                   _  __  __              _  _          ##
-##                  | ||  \/  |            | |(_)         ##
-##   ___  _ __    __| || \  / |  ___  _ __ | | _  _ __    ##
-##  / __|| '_ \  / _` || |\/| | / _ \| '__|| || || '_ \   ##
-##  \__ \| |_) || (_| || |  | ||  __/| |   | || || | | |  ##
-##  |___/| .__/  \__,_||_|  |_| \___||_|   |_||_||_| |_|  ##
+##        https://github.com/waluwaz/spdWan               ##
+##                   _  								  ##
+##                  | |							          ##
+##   ___  _ __    __| |									  ##
+##  / __|| '_ \  / _` |									  ##
+##  \__ \| |_) || (_| |									  ##
+##  |___/| .__/  \__,_|	Wan								  ##
 ##       | |                                              ##
 ##       |_|                                              ##
+##														  ##
+##         inspired by and built upon spdMerlin           ##
 ##                                                        ##
-##        https://github.com/jackyaz/spdMerlin            ##
 ##                                                        ##
 ############################################################
 
@@ -21,11 +23,20 @@
 ############################################################
 
 ### Start of script variables ###
-readonly SCRIPT_NAME="spdMerlin"
+# wistuplu: It is undesirable to have two flavours of spdMerlin triggering speedtests at the same time.
+# spdWan will use the same lockfile as spdMerlin
+# By the way, maybe this lock mechanism should be made "script-agnostic", and be common for all scripts
+# relying on ookla / speedtest. The filename could become ookla.lock, or speedtest.lock, or speedtest-scripts.lock. 
+#
+# Having different scriptnames, will probably split the resultsets in two.
+# This gives the flexibility of changing the database layout etc, such as adding the servername in the results/csv.
+# Unfortunately, it also deprives the user from a common vision on all test results from the WebUI. To be analyzed...
+readonly LOCK_NAME="spdMerlin"
+readonly SCRIPT_NAME="spdWan"
 readonly SCRIPT_NAME_LOWER=$(echo $SCRIPT_NAME | tr 'A-Z' 'a-z')
-readonly SCRIPT_VERSION="v4.2.1"
+readonly SCRIPT_VERSION="v0.0.3"
 SCRIPT_BRANCH="master"
-SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/$SCRIPT_NAME/$SCRIPT_BRANCH"
+SCRIPT_REPO="https://raw.githubusercontent.com/waluwaz/$SCRIPT_NAME/$SCRIPT_BRANCH"
 readonly SCRIPT_DIR="/jffs/addons/$SCRIPT_NAME_LOWER.d"
 readonly SCRIPT_WEBPAGE_DIR="$(readlink /www/user)"
 readonly SCRIPT_WEB_DIR="$SCRIPT_WEBPAGE_DIR/$SCRIPT_NAME_LOWER"
@@ -75,13 +86,13 @@ Firmware_Version_Check(){
 
 ### Code for these functions inspired by https://github.com/Adamm00 - credit to @Adamm ###
 Check_Lock(){
-	if [ -f "/tmp/$SCRIPT_NAME.lock" ]; then
-		ageoflock=$(($(date +%s) - $(date +%s -r /tmp/$SCRIPT_NAME.lock)))
+	if [ -f "/tmp/$LOCK_NAME.lock" ]; then
+		ageoflock=$(($(date +%s) - $(date +%s -r /tmp/$LOCK_NAME.lock)))
 		if [ "$ageoflock" -gt 600 ]; then
 			Print_Output true "Stale lock file found (>600 seconds old) - purging lock" "$ERR"
-			kill "$(sed -n '1p' /tmp/$SCRIPT_NAME.lock)" >/dev/null 2>&1
+			kill "$(sed -n '1p' /tmp/$LOCK_NAME.lock)" >/dev/null 2>&1
 			Clear_Lock
-			echo "$$" > "/tmp/$SCRIPT_NAME.lock"
+			echo "$$" > "/tmp/$LOCK_NAME.lock"
 			return 0
 		else
 			Print_Output true "Lock file found (age: $ageoflock seconds) - stopping to prevent duplicate runs" "$ERR"
@@ -96,13 +107,13 @@ Check_Lock(){
 			fi
 		fi
 	else
-		echo "$$" > "/tmp/$SCRIPT_NAME.lock"
+		echo "$$" > "/tmp/$LOCK_NAME.lock"
 		return 0
 	fi
 }
 
 Clear_Lock(){
-	rm -f "/tmp/$SCRIPT_NAME.lock" 2>/dev/null
+	rm -f "/tmp/$LOCK_NAME.lock" 2>/dev/null
 	return 0
 }
 
