@@ -32,7 +32,7 @@
 # This gives the flexibility of changing the database layout etc, such as adding the servername in the results/csv.
 # Unfortunately, it also deprives the user from a common vision on all test results from the WebUI. To be analyzed...
 readonly LOCK_NAME="spdMerlin"
-readonly SCRIPT_NAME="spdWan"
+readonly SCRIPT_NAME="spdMerlin"
 readonly SCRIPT_NAME_LOWER=$(echo $SCRIPT_NAME | tr 'A-Z' 'a-z')
 readonly SCRIPT_VERSION="v0.0.3"
 SCRIPT_BRANCH="master"
@@ -1589,16 +1589,18 @@ Run_Speedtest(){
 						sh "$extStats" ext "$download" "$upload"
 					fi
 #				fi
-# When instructed to run for several probes, it will stop 
-# as soon as one run reaches the download speed hard-coded two lines below, or in the upper limit for download for AutoBW.
-# The rational is that if one server indicates bad performance, it might be due to a temporarily "bad" server.
-# In such case, the testing proceeds with more servers.
+# When instructed to run for several probes, it will only test 1 server if the first test looks OK 
+# (i.e. reaches the upper limit for download for AutoBW).
+# The rational is that if the first server indicates bad performance, it is interpreted as an interesting context to test them all.
 # Note that the servers are  defined in a specific order. First servers that are far from my ISP (more likely to produce bad results).
 # Then servers which are close to my ISP. 
 #				if [ "$mode" = "schedule" ]; then
-					if [ "$(echo $download | awk 'BEGIN{FS="."}{print $1}')" -gt "$(($(AutoBWConf check ULIMIT DOWN)*1))" ]
-					then 
-						break
+					if [ "$IFACE_NAME"=WAN ]
+					then
+						if [ "$(echo $download | awk 'BEGIN{FS="."}{print $1}')" -gt "$(($(AutoBWConf check ULIMIT DOWN)*1))" ]
+						then 
+							break
+						fi
 					fi
 #				fi
 			done
