@@ -34,7 +34,9 @@ Using your preferred SSH client/terminal, copy and paste the following command, 
 ```sh
 /usr/sbin/curl --retry 3 "https://raw.githubusercontent.com/jackyaz/spdMerlin/master/spdmerlin.sh" -o "/jffs/scripts/spdmerlin" && chmod 0755 /jffs/scripts/spdmerlin && /jffs/scripts/spdmerlin install
 ```
-Then, if you feel VERY lucky, replace spdmerlin.sh by the spdmerlin.sh from this branch.
+Then, if you feel VERY lucky, replace that spdmerlin.sh by the spdmerlin.sh from this branch. Obviously, you have now "sabotaged" your spdMerlin
+and replaced it with spdWan, which disguises itself in a spdMerlin file. spdWan is not designed to pruposefully harm your system.
+In practice, it has the potential to harm it though :-)  It was only "tested" by its author on his own environment... 
 
 
 ## Usage
