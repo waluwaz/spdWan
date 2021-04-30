@@ -1,16 +1,18 @@
 #!/bin/sh
 
 ############################################################
-##                   _  __  __              _  _          ##
-##                  | ||  \/  |            | |(_)         ##
-##   ___  _ __    __| || \  / |  ___  _ __ | | _  _ __    ##
-##  / __|| '_ \  / _` || |\/| | / _ \| '__|| || || '_ \   ##
-##  \__ \| |_) || (_| || |  | ||  __/| |   | || || | | |  ##
-##  |___/| .__/  \__,_||_|  |_| \___||_|   |_||_||_| |_|  ##
+##        https://github.com/waluwaz/spdWan               ##
+##                   _  								  ##
+##                  | |							          ##
+##   ___  _ __    __| |									  ##
+##  / __|| '_ \  / _` |									  ##
+##  \__ \| |_) || (_| |									  ##
+##  |___/| .__/  \__,_|	Wan								  ##
 ##       | |                                              ##
 ##       |_|                                              ##
+##														  ##
+##         inspired by and built upon spdMerlin           ##
 ##                                                        ##
-##        https://github.com/jackyaz/spdMerlin            ##
 ##                                                        ##
 ############################################################
 
@@ -21,11 +23,20 @@
 ############################################################
 
 ### Start of script variables ###
+# wistuplu: It is undesirable to have two flavours of spdMerlin triggering speedtests at the same time.
+# spdWan will use the same lockfile as spdMerlin
+# By the way, maybe this lock mechanism should be made "script-agnostic", and be common for all scripts
+# relying on ookla / speedtest. The filename could become ookla.lock, or speedtest.lock, or speedtest-scripts.lock. 
+#
+# Having different scriptnames, will probably split the resultsets in two.
+# This gives the flexibility of changing the database layout etc, such as adding the servername in the results/csv.
+# Unfortunately, it also deprives the user from a common vision on all test results from the WebUI. To be analyzed...
+readonly LOCK_NAME="spdMerlin"
 readonly SCRIPT_NAME="spdMerlin"
 readonly SCRIPT_NAME_LOWER=$(echo $SCRIPT_NAME | tr 'A-Z' 'a-z')
-readonly SCRIPT_VERSION="v4.2.1"
+readonly SCRIPT_VERSION="v0.0.3"
 SCRIPT_BRANCH="master"
-SCRIPT_REPO="https://raw.githubusercontent.com/jackyaz/$SCRIPT_NAME/$SCRIPT_BRANCH"
+SCRIPT_REPO="https://raw.githubusercontent.com/waluwaz/$SCRIPT_NAME/$SCRIPT_BRANCH"
 readonly SCRIPT_DIR="/jffs/addons/$SCRIPT_NAME_LOWER.d"
 readonly SCRIPT_WEBPAGE_DIR="$(readlink /www/user)"
 readonly SCRIPT_WEB_DIR="$SCRIPT_WEBPAGE_DIR/$SCRIPT_NAME_LOWER"
@@ -75,13 +86,13 @@ Firmware_Version_Check(){
 
 ### Code for these functions inspired by https://github.com/Adamm00 - credit to @Adamm ###
 Check_Lock(){
-	if [ -f "/tmp/$SCRIPT_NAME.lock" ]; then
-		ageoflock=$(($(date +%s) - $(date +%s -r /tmp/$SCRIPT_NAME.lock)))
+	if [ -f "/tmp/$LOCK_NAME.lock" ]; then
+		ageoflock=$(($(date +%s) - $(date +%s -r /tmp/$LOCK_NAME.lock)))
 		if [ "$ageoflock" -gt 600 ]; then
 			Print_Output true "Stale lock file found (>600 seconds old) - purging lock" "$ERR"
-			kill "$(sed -n '1p' /tmp/$SCRIPT_NAME.lock)" >/dev/null 2>&1
+			kill "$(sed -n '1p' /tmp/$LOCK_NAME.lock)" >/dev/null 2>&1
 			Clear_Lock
-			echo "$$" > "/tmp/$SCRIPT_NAME.lock"
+			echo "$$" > "/tmp/$LOCK_NAME.lock"
 			return 0
 		else
 			Print_Output true "Lock file found (age: $ageoflock seconds) - stopping to prevent duplicate runs" "$ERR"
@@ -96,13 +107,13 @@ Check_Lock(){
 			fi
 		fi
 	else
-		echo "$$" > "/tmp/$SCRIPT_NAME.lock"
+		echo "$$" > "/tmp/$LOCK_NAME.lock"
 		return 0
 	fi
 }
 
 Clear_Lock(){
-	rm -f "/tmp/$SCRIPT_NAME.lock" 2>/dev/null
+	rm -f "/tmp/$LOCK_NAME.lock" 2>/dev/null
 	return 0
 }
 
@@ -415,9 +426,9 @@ Create_Symlinks(){
 	
 	for index in 1 2 3 4 5; do
 		comment=""
-		if [ ! -f "/sys/class/net/tun1$index/operstate" ] || [ "$(cat "/sys/class/net/tun1$index/operstate")" = "down" ]; then
-			comment=" #excluded - interface not up#"
-		fi
+#		if [ ! -f "/sys/class/net/tun1$index/operstate" ] || [ "$(cat "/sys/class/net/tun1$index/operstate")" = "down" ]; then
+#			comment=" #excluded - interface not up#"
+#		fi
 		if [ "$index" -lt 5 ]; then
 			printf "VPNC%s%s\\n" "$index" "$comment" >> "$SCRIPT_INTERFACES"
 		else
@@ -524,9 +535,9 @@ Interfaces_FromSettings(){
 			
 			for index in 1 2 3 4 5; do
 				comment=" #excluded#"
-				if [ ! -f "/sys/class/net/tun1$index/operstate" ] || [ "$(cat "/sys/class/net/tun1$index/operstate")" = "down" ]; then
-					comment=" #excluded - interface not up#"
-				fi
+#				if [ ! -f "/sys/class/net/tun1$index/operstate" ] || [ "$(cat "/sys/class/net/tun1$index/operstate")" = "down" ]; then
+#					comment=" #excluded - interface not up#"
+#				fi
 				printf "VPNC%s%s\\n" "$index" "$comment" >> "$SCRIPT_INTERFACES"
 			done
 			
@@ -551,17 +562,17 @@ Interfaces_FromSettings(){
 				
 				if echo "$interfaceline" | grep -q "#excluded" ; then
 					IFACE_LOWER="$(Get_Interface_From_Name "$(echo "$interfaceline" | cut -f1 -d"#" | sed 's/ *$//')" | tr "A-Z" "a-z")"
-					if [ ! -f "/sys/class/net/$IFACE_LOWER/operstate" ] || [ "$(cat "/sys/class/net/$IFACE_LOWER/operstate")" = "down" ]; then
-						sed -i "$ifacelinenumber"'s/ #excluded#/ #excluded - interface not up#/' "$SCRIPT_INTERFACES_USER"
-					else
+#					if [ ! -f "/sys/class/net/$IFACE_LOWER/operstate" ] || [ "$(cat "/sys/class/net/$IFACE_LOWER/operstate")" = "down" ]; then
+#						sed -i "$ifacelinenumber"'s/ #excluded#/ #excluded - interface not up#/' "$SCRIPT_INTERFACES_USER"
+#					else
 						sed -i "$ifacelinenumber"'s/ #excluded - interface not up#//' "$SCRIPT_INTERFACES_USER"
 						sed -i "$ifacelinenumber"'s/ #excluded#//' "$SCRIPT_INTERFACES_USER"
-					fi
+#					fi
 				else
 					IFACE_LOWER="$(Get_Interface_From_Name "$(echo "$interfaceline" | cut -f1 -d"#" | sed 's/ *$//')" | tr "A-Z" "a-z")"
-					if [ ! -f "/sys/class/net/$IFACE_LOWER/operstate" ] || [ "$(cat "/sys/class/net/$IFACE_LOWER/operstate")" = "down" ]; then
-						sed -i "$ifacelinenumber"'s/$/ #excluded - interface not up#/' "$SCRIPT_INTERFACES_USER"
-					fi
+#					if [ ! -f "/sys/class/net/$IFACE_LOWER/operstate" ] || [ "$(cat "/sys/class/net/$IFACE_LOWER/operstate")" = "down" ]; then
+#						sed -i "$ifacelinenumber"'s/$/ #excluded - interface not up#/' "$SCRIPT_INTERFACES_USER"
+#					fi
 				fi
 			done
 			
@@ -752,11 +763,11 @@ Set_Interface_State(){
 	if echo "$interfaceline" | grep -q "VPN" ; then
 		if echo "$interfaceline" | grep -q "#excluded" ; then
 			IFACE_LOWER="$(Get_Interface_From_Name "$(echo "$interfaceline" | cut -f1 -d"#" | sed 's/ *$//')" | tr "A-Z" "a-z")"
-			if [ ! -f "/sys/class/net/$IFACE_LOWER/operstate" ] || [ "$(cat "/sys/class/net/$IFACE_LOWER/operstate")" = "down" ]; then
-				sed -i "$1"'s/ #excluded#/ #excluded - interface not up#/' "$SCRIPT_INTERFACES_USER"
-			else
+#			if [ ! -f "/sys/class/net/$IFACE_LOWER/operstate" ] || [ "$(cat "/sys/class/net/$IFACE_LOWER/operstate")" = "down" ]; then
+#				sed -i "$1"'s/ #excluded#/ #excluded - interface not up#/' "$SCRIPT_INTERFACES_USER"
+#			else
 				sed -i "$1"'s/ #excluded - interface not up#/ #excluded#/' "$SCRIPT_INTERFACES_USER"
-			fi
+#			fi
 		fi
 	fi
 }
@@ -792,19 +803,19 @@ Generate_Interface_List(){
 			interfaceline="$(sed "$interface!d" "$SCRIPT_INTERFACES_USER" | awk '{$1=$1};1')"
 			if echo "$interfaceline" | grep -q "#excluded" ; then
 				IFACE_LOWER="$(Get_Interface_From_Name "$(echo "$interfaceline" | cut -f1 -d"#" | sed 's/ *$//')" | tr "A-Z" "a-z")"
-				if [ ! -f "/sys/class/net/$IFACE_LOWER/operstate" ] || [ "$(cat "/sys/class/net/$IFACE_LOWER/operstate")" = "down" ]; then
-					sed -i "$interface"'s/ #excluded#/ #excluded - interface not up#/' "$SCRIPT_INTERFACES_USER"
-				else
+#				if [ ! -f "/sys/class/net/$IFACE_LOWER/operstate" ] || [ "$(cat "/sys/class/net/$IFACE_LOWER/operstate")" = "down" ]; then
+#					sed -i "$interface"'s/ #excluded#/ #excluded - interface not up#/' "$SCRIPT_INTERFACES_USER"
+#				else
 					sed -i "$interface"'s/ #excluded - interface not up#//' "$SCRIPT_INTERFACES_USER"
 					sed -i "$interface"'s/ #excluded#//' "$SCRIPT_INTERFACES_USER"
-				fi
+#				fi
 			else
 				IFACE_LOWER="$(Get_Interface_From_Name "$(echo "$interfaceline" | cut -f1 -d"#" | sed 's/ *$//')" | tr "A-Z" "a-z")"
-				if [ ! -f "/sys/class/net/$IFACE_LOWER/operstate" ] || [ "$(cat "/sys/class/net/$IFACE_LOWER/operstate")" = "down" ]; then
-					sed -i "$interface"'s/$/ #excluded - interface not up#/' "$SCRIPT_INTERFACES_USER"
-				else
+#				if [ ! -f "/sys/class/net/$IFACE_LOWER/operstate" ] || [ "$(cat "/sys/class/net/$IFACE_LOWER/operstate")" = "down" ]; then
+#					sed -i "$interface"'s/$/ #excluded - interface not up#/' "$SCRIPT_INTERFACES_USER"
+#				else
 					sed -i "$interface"'s/$/ #excluded#/' "$SCRIPT_INTERFACES_USER"
-				fi
+#				fi
 			fi
 			
 			sed -i 's/ *$//' "$SCRIPT_INTERFACES_USER"
@@ -1159,9 +1170,9 @@ GenerateServerList(){
 	fi
 	promptforservername="$2"
 	printf "Generating list of closest servers for %s...\\n\\n" "$1"
-	serverlist="$("$OOKLA_DIR/speedtest" --interface="$(Get_Interface_From_Name "$1")" --servers --format="json" --accept-license --accept-gdpr)" 2>/dev/null
+	serverlist="$("$OOKLA_DIR/speedtest" --servers --format="json" --accept-license --accept-gdpr)" 2>/dev/null
 	if [ -z "$serverlist" ]; then
-		Print_Output true "Error retrieving server list for for $1" "$CRIT"
+		Print_Output true "Error retrieving server list for for WAN" "$CRIT"
 		serverno="exit"
 		return 1
 	fi
@@ -1265,7 +1276,7 @@ GenerateServerList_WebUI(){
 		IFACELIST="$(echo "$IFACELIST" | cut -c2-)"
 		
 		for IFACE_NAME in $IFACELIST; do
-			serverlist="$("$OOKLA_DIR/speedtest" --interface="$(Get_Interface_From_Name "$IFACE_NAME")" --servers --format="json" --accept-license --accept-gdpr)" 2>/dev/null
+			serverlist="$("$OOKLA_DIR/speedtest"  --servers --format="json" --accept-license --accept-gdpr)" 2>/dev/null
 			servercount="$(echo "$serverlist" | jq '.servers | length')"
 			COUNTER=1
 			until [ $COUNTER -gt "$servercount" ]; do
@@ -1276,7 +1287,7 @@ GenerateServerList_WebUI(){
 			printf "-----\\n" >> "/tmp/$serverlistfile.tmp"
 		done
 	else
-		serverlist="$("$OOKLA_DIR/speedtest" --interface="$(Get_Interface_From_Name "$spdifacename")" --servers --format="json" --accept-license --accept-gdpr)" 2>/dev/null
+		serverlist="$("$OOKLA_DIR/speedtest"  --servers --format="json" --accept-license --accept-gdpr)" 2>/dev/null
 		servercount="$(echo "$serverlist" | jq '.servers | length')"
 		COUNTER=1
 		until [ $COUNTER -gt "$servercount" ]; do
@@ -1422,10 +1433,10 @@ Run_Speedtest(){
 			for IFACE_NAME in $IFACELIST; do
 				IFACE="$(Get_Interface_From_Name "$IFACE_NAME")"
 				IFACE_LOWER="$(echo "$IFACE" | tr "A-Z" "a-z")"
-				if [ ! -f "/sys/class/net/$IFACE_LOWER/operstate" ] || [ "$(cat "/sys/class/net/$IFACE_LOWER/operstate")" = "down" ]; then
-					Print_Output true "$IFACE not up, please check. Skipping speedtest for $IFACE_NAME" "$WARN"
-					continue
-				else
+#				if [ ! -f "/sys/class/net/$IFACE_LOWER/operstate" ] || [ "$(cat "/sys/class/net/$IFACE_LOWER/operstate")" = "down" ]; then
+#					Print_Output true "$IFACE not up, please check. Skipping speedtest for $IFACE_NAME" "$WARN"
+#					continue
+#				else
 					if [ "$mode" = "webui_user" ]; then
 						mode="user"
 					elif [ "$mode" = "webui_auto" ]; then
@@ -1460,7 +1471,7 @@ Run_Speedtest(){
 					
 					if [ "$mode" = "auto" ]; then
 						Print_Output true "Starting speedtest using auto-selected server for $IFACE_NAME interface" "$PASS"
-						"$OOKLA_DIR/speedtest" --interface="$IFACE" --format="human-readable" --unit="Mbps" --progress="yes" --accept-license --accept-gdpr | tee "$tmpfile" &
+						"$OOKLA_DIR/speedtest"  --format="human-readable" --unit="Mbps" --progress="yes" --accept-license --accept-gdpr | tee "$tmpfile" &
 						speedtestcount=0
 						while [ -n "$(pidof speedtest)" ] && [ "$speedtestcount" -lt 120 ]; do
 							speedtestcount="$((speedtestcount + 1))"
@@ -1474,7 +1485,7 @@ Run_Speedtest(){
 					else
 						if [ "$speedtestserverno" -ne 0 ]; then
 							Print_Output true "Starting speedtest using $speedtestservername for $IFACE_NAME interface" "$PASS"
-							"$OOKLA_DIR/speedtest" --interface="$IFACE" --server-id="$speedtestserverno" --format="human-readable" --unit="Mbps" --progress="yes" --accept-license --accept-gdpr | tee "$tmpfile" &
+							"$OOKLA_DIR/speedtest"  --server-id="$speedtestserverno" --format="human-readable" --unit="Mbps" --progress="yes" --accept-license --accept-gdpr | tee "$tmpfile" &
 							speedtestcount=0
 							while [ -n "$(pidof speedtest)" ] && [ "$speedtestcount" -lt 120 ]; do
 								speedtestcount="$((speedtestcount + 1))"
@@ -1487,7 +1498,7 @@ Run_Speedtest(){
 							fi
 						else
 							Print_Output true "Starting speedtest using using auto-selected server for $IFACE_NAME interface" "$PASS"
-							"$OOKLA_DIR/speedtest" --interface="$IFACE" --format="human-readable" --unit="Mbps" --progress="yes" --accept-license --accept-gdpr | tee "$tmpfile" &
+							"$OOKLA_DIR/speedtest"  --format="human-readable" --unit="Mbps" --progress="yes" --accept-license --accept-gdpr | tee "$tmpfile" &
 							speedtestcount=0
 							while [ -n "$(pidof speedtest)" ] && [ "$speedtestcount" -lt 120 ]; do
 								speedtestcount="$((speedtestcount + 1))"
@@ -1577,7 +1588,21 @@ Run_Speedtest(){
 					if [ -f "$extStats" ]; then
 						sh "$extStats" ext "$download" "$upload"
 					fi
-				fi
+#				fi
+# When instructed to run for several probes, it will only test 1 server if the first test looks OK 
+# (i.e. reaches the upper limit for download for AutoBW).
+# The rational is that if the first server indicates bad performance, it is interpreted as an interesting context to test them all.
+# Note that the servers are  defined in a specific order. First servers that are far from my ISP (more likely to produce bad results).
+# Then servers which are close to my ISP. 
+#				if [ "$mode" = "schedule" ]; then
+					if [ "$IFACE_NAME"=WAN ]
+					then
+						if [ "$(echo $download | awk 'BEGIN{FS="."}{print $1}')" -gt "$(($(AutoBWConf check ULIMIT DOWN)*1))" ]
+						then 
+							break
+						fi
+					fi
+#				fi
 			done
 			
 			if [ "$(ExcludeFromQoS check)" = "true" ]; then
