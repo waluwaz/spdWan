@@ -55,11 +55,8 @@ If this does not work, you will need to use the full path:
 ```
 
 ## Screenshots
-Well, I didn't change the WebUI, so spdMerlin screenshots still apply:
+Well, I didn't change the WebUI, so spdMerlin screenshots still apply.
 
-![WebUI](https://puu.sh/HvYnR/d248031bb2.png)
-
-![CLI](https://puu.sh/HvYrX/d7b6ee5840.png)
 
 ## Help
 You're on your own... Unsupported weekend experiment...
