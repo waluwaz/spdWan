@@ -1590,7 +1590,7 @@ Run_Speedtest(){
 					fi
 #				fi
 # When instructed to run for several probes, it will only test 1 server if the first test looks OK 
-# (i.e. reaches the upper limit for download for AutoBW).
+# (i.e. reaches the upper limit for download for AutoBW AND has 0.0% packet loss).
 # The rational is that if the first server indicates bad performance, it is interpreted as an interesting context to test them all.
 # Note that the servers are  defined in a specific order. First servers that are far from my ISP (more likely to produce bad results).
 # Then servers which are close to my ISP. 
@@ -1599,7 +1599,10 @@ Run_Speedtest(){
 					then
 						if [ "$(echo $download | awk 'BEGIN{FS="."}{print $1}')" -gt "$(($(AutoBWConf check ULIMIT DOWN)*1))" ]
 						then 
-							break
+							if [[ "$pktloss" == "0.0" ]]
+							then
+								break
+							fi
 						fi
 					fi
 #				fi
